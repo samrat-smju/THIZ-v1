@@ -1,0 +1,6 @@
+{
+  "name": "THIZ",
+  "description": "A modern, premium product-selling business web application with 3D product visual showcase, bKash manual payment verification, and comprehensive admin suite.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
