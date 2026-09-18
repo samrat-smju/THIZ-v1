@@ -1,0 +1,9 @@
+import { getStore } from "@netlify/blobs";
+import type { Config } from "@netlify/functions";
+const store=()=>getStore("thiz-data",{consistency:"strong"});
+const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json"}});
+const authorized=(req:Request)=>{const p=Netlify.env.get("THIZ_ADMIN_PASSWORD");return !!p&&req.headers.get("x-thiz-admin")===p};
+const defaults={settings:{brand:"THIZ",tagline:"VALUE FOR YOUR EVERYDAY.",eyebrow:"Lifestyle • Everyday Essentials",description:"Thoughtfully selected products for modern daily life.",logo:"",banner:"",background:"",backgroundBlur:0,phone:"01600417212",whatsapp:"8801600417212",facebook:"",instagram:"",tiktok:"",email:"",address:"Bangladesh"},products:[]};
+async function load(){return await store().get("catalog",{type:"json"})||defaults}
+export default async(req:Request)=>{const u=new URL(req.url);if(req.method==="GET"){if(u.pathname==="/api/image"){const k=u.searchParams.get("key");if(!k)return new Response("Missing key",{status:400});const b=await store().get(k,{type:"blob"});if(!b)return new Response("Not found",{status:404});return new Response(b,{headers:{"cache-control":"public,max-age=31536000,immutable"}})}return json(await load())}if(!authorized(req))return json({error:"Unauthorized"},401);if(req.method==="POST"){const b=await req.json();if(b.action==="saveCatalog"){await store().setJSON("catalog",b.data);return json(b.data)}if(b.action==="deleteImage"){await store().delete(b.key);return json({ok:true})}return json({error:"Unknown action"},400)}if(req.method==="DELETE"){const b=await req.json(),d:any=await load();d.products=d.products.filter((p:any)=>p.id!==b.id);await store().setJSON("catalog",d);return json(d)}return json({error:"Method not allowed"},405)};
+export const config:Config={path:["/api","/api/*"]};
